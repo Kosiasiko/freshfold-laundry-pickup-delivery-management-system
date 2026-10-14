@@ -4,6 +4,8 @@ import helmet from "helmet";
 
 import { notFound } from "./middleware/notFound.middleware.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+import authRoutes from "./routes/auth.routes.js";
+import businessRoutes from "./routes/business.router.js";
 
 const app = express();
 
@@ -12,8 +14,6 @@ app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-import authRoutes from "./routes/auth.routes.js";
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -31,6 +31,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/businesses", businessRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
