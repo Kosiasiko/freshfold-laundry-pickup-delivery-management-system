@@ -11,7 +11,7 @@ import {
 
 import { authenticate } from "../middleware/auth.middleware.js";
 import { authorizeRoles } from "../middleware/role.middleware.js";
-import { validate } from "../middleware/validate.middleware.js";
+import { validate } from "../validations/validate.middleware.js";
 
 import {
   createOrderValidation,
