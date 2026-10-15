@@ -7,6 +7,9 @@ import { errorHandler } from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import businessRoutes from "./routes/business.router.js";
 
+import serviceRoutes from "./routes/service.routes.js";
+import orderRoutes from "./routes/order.routes.js";
+
 const app = express();
 
 app.use(helmet());
@@ -32,6 +35,8 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/businesses", businessRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

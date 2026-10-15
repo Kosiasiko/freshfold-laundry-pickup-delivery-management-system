@@ -25,7 +25,7 @@ export const authenticate = async (req, res, next) => {
     if (!user || !user.isActive) {
       return res.status(401).json({
         success: false,
-        message: "Invalid or inactive user account.",
+        message: "Invalid or expired authentication token.",
       });
     }
 
