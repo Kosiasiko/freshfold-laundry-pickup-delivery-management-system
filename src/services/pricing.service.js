@@ -1,6 +1,7 @@
 import ServicePrice from "../models/pricing.model.js";
 import { calculateOrder } from "./pricing.calculator.js";
 import AppError from "../utils/AppError.js";
+import Charge from "../models/charge.model.js";
 
 async function createPrice(businessId, data) {
   try {
@@ -29,22 +30,46 @@ async function updatePrice(businessId, priceId, data) {
   return price;
 }
 
-// Placeholder: agree the real delivery rules with your team
-async function getDeliveryFee(businessId, deliveryRequired) {
-  if (!deliveryRequired) return 0;
-  return 50000; // 500 naira in kobo
-}
-
 async function calculateOrderCost(businessId, payload) {
-  const { lines, deliveryRequired, extraCharges = [] } = payload;
+  const { lines, deliveryRequired, extraChargeIds = [] } = payload;
 
   const prices = await ServicePrice.find({
     _id: { $in: lines.map((l) => l.priceId) },
     business: businessId,
   });
 
-  const deliveryFee = await getDeliveryFee(businessId, deliveryRequired);
-  return calculateOrder({ prices, lines, deliveryFee, extraCharges });
+  let deliveryRule = null;
+  if (deliveryRequired) {
+    deliveryRule = await Charge.findOne({
+      business: businessId,
+      type: "DELIVERY",
+      isActive: true,
+    });
+    if (!deliveryRule) {
+      throw new AppError("This business has not set a delivery fee", 400);
+    }
+  }
+
+  const uniqueIds = [...new Set(extraChargeIds)];
+  const extras = uniqueIds.length
+    ? await Charge.find({
+        _id: { $in: uniqueIds },
+        business: businessId,
+        type: "EXTRA",
+        isActive: true,
+      })
+    : [];
+  if (extras.length !== uniqueIds.length) {
+    throw new AppError("One or more extra charges are invalid", 400);
+  }
+
+  const extraCharges = extras.map((c) => ({
+    chargeId: String(c._id),
+    name: c.name,
+    amount: c.amount,
+  }));
+
+  return calculateOrder({ prices, lines, deliveryRule, extraCharges });
 }
 
 export { createPrice, getPrices, updatePrice, calculateOrderCost };

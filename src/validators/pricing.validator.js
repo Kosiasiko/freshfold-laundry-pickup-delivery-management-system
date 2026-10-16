@@ -54,14 +54,7 @@ const calculateOrderSchema = z.object({
       )
       .min(1, 'Add at least one line'),
     deliveryRequired: z.boolean().default(false),
-    extraCharges: z
-      .array(
-        z.object({
-          name: z.string().min(1),
-          amount: z.number().int().nonnegative(),
-        })
-      )
-      .optional(),
+    extraChargeIds: z.array(objectId).optional(),
   }),
 });
 

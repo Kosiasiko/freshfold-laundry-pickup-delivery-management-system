@@ -28,7 +28,19 @@ function calculateLine(price, input) {
   };
 }
 
-function calculateOrder({ prices, lines, deliveryFee = 0, extraCharges = [] }) {
+function resolveDeliveryFee(rule, subtotal) {
+  if (!rule) return 0;
+  if (rule.freeAbove && subtotal >= rule.freeAbove) return 0;
+  return rule.amount;
+}
+
+function calculateOrder({
+  prices,
+  lines,
+  deliveryFee = 0,
+  deliveryRule = null,
+  extraCharges = [],
+}) {
   const priceMap = new Map(prices.map((p) => [String(p._id), p]));
 
   const calculatedLines = lines.map((line) => {
@@ -41,16 +53,19 @@ function calculateOrder({ prices, lines, deliveryFee = 0, extraCharges = [] }) {
   });
 
   const subtotal = calculatedLines.reduce((sum, l) => sum + l.lineTotal, 0);
+  const finalDeliveryFee = deliveryRule
+    ? resolveDeliveryFee(deliveryRule, subtotal)
+    : deliveryFee;
   const extrasTotal = extraCharges.reduce((sum, c) => sum + c.amount, 0);
 
   return {
     lines: calculatedLines,
     subtotal,
-    deliveryFee,
+    deliveryFee: finalDeliveryFee,
     extraCharges,
-    total: subtotal + deliveryFee + extrasTotal,
-    currency: 'NGN',
+    total: subtotal + finalDeliveryFee + extrasTotal,
+    currency: "NGN",
   };
 }
 
-export { calculateLine, calculateOrder };
+export { calculateLine, calculateOrder, resolveDeliveryFee };

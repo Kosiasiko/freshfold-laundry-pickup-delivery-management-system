@@ -1,5 +1,6 @@
 import express from "express";
 import pricingRouter from "./routes/pricing.router.js";
+import chargeRouter from "./routes/charge.router.js";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/businesses/:businessId/prices", pricingRouter);
+app.use("/api/businesses/:businessId/charges", chargeRouter);
 
 // error handler (keep last, after all routes)
 app.use((err, req, res, next) => {
