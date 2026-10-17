@@ -1,13 +1,14 @@
-import User from "../models/User.model;"
 import mongoose from "mongoose";
-import SupportTicket from "../models/supportTicket.model";
+import SupportTicket from "../models/supportTicket.model.js";
+import User from "../models/user.model.js";
+import Order from "../models/order.model.js"
 
 export const createSupportTicket = async (req, res, next) => {
     try {
-        const { subject, description } = req.body;
+        const { subject, description, order } = req.body;
 
         if (
-            typeof subject !== "strign" || typeof description !== "string" || !subject.trim() || !description.trim()
+            typeof subject !== "string" || typeof description !== "string" || !subject.trim() || !description.trim()
         ) {
             return res.status(400).json({
                 succeess: false,
@@ -15,8 +16,44 @@ export const createSupportTicket = async (req, res, next) => {
             });
         }
 
+        if (subject.trim().length < 3 || subject.trim().length >150){
+            return res.status(400).json({
+                success: false,
+                message: "Subject must be between 3 and 150 characters"
+            })
+        }
+
+        if(description.trim().length > 5000) {
+            return res.status(400).json({
+                success: false,
+                message: "description cannot exceed 5000 characters"
+            });
+        }
+
+        if(order){
+            if(! mongoose.isValidObjectId(order)){
+                return res.status(400).json({
+                    success:false,
+                    message: "Invalid order ID",
+                });
+            }
+
+            const customerOrder = await Order.findone({
+                _id: order,
+                customer: req.user._id,
+            });
+            if(!customerOrder) {
+                return res.status(404).json({
+             success:failed,
+             message: "order not found for this customer."
+                })
+            }
+            
+        }
+
         const ticket = await SupportTicket.create({
             customer: req.user._id,
+            order: order || null,
             subject: subject.trim(),
             description: description.trim(),
             messages: [
@@ -57,7 +94,7 @@ export const
     getSupportTicketById = async (req, res, next) => {
         try {
             const { ticketId } = req.params;
-            if (!ticketId || !mongoose.isvalidObjectId(ticketId
+            if (!ticketId || !mongoose.isValidObjectId(ticketId
             )) {
                 return res.status(400).json({
                     success: false,
@@ -123,7 +160,7 @@ export const replyToSupportTicket = async (req, res, next) => {
             });
         }
 
-        if (["Resolved", "Closed"].include(ticket.status)) {
+        if (["Resolved", "Closed"].includes(ticket.status)) {
             return res.status(400).json({
                 success: false,
                 message: "This ticket is closed to new replies.",
@@ -152,10 +189,11 @@ export const replyToSupportTicket = async (req, res, next) => {
 export const
     getAllSupportTickets = async (req, res, next) => {
         try {
-            const tickets = await SupportTicket.find().populate("customer", "name email role").populate("assignedTo", "name email role").sort({ createdAt: -1 });
+            const tickets = await SupportTicket.find().populate("customer", "name email role").populate("order", "orderReference status").populate("assignedTo", "name email role").sort({ createdAt: -1 });
 
             return res.status(200).json({
                 success: true,
+                message: "support tickets retrieved successfully",
                 count: tickets.length,
                 data: tickets,
             });
@@ -204,7 +242,7 @@ export const staffReplyToSupportTicket = async (req, res, next) => {
             });
         }
 
-        ticket.message.push({
+        ticket.messages.push({
             sender: req.user._id,
             message: message.trim()
         });
@@ -232,9 +270,9 @@ export const assignSupportTicket = async (req, res, next) => {
                 message: "invalid ticket Id or staff id",
             });
         }
-        const staff = await user.findOne({
+        const staff = await User.findOne({
             _id: staffId,
-            role: { $in: ["Administrator", "laundry staff"] },
+            role: { $in: ["Administrator", "Laundry Staff"] },
             isActive: true,
         });
         if (!staff) {
@@ -244,7 +282,7 @@ export const assignSupportTicket = async (req, res, next) => {
             });
         }
 
-        const ticket = await ticket.findById(ticketId);
+        const ticket = await SupportTicket.findById(ticketId);
         if (!ticket) {
             return res.status(404).json({
                 success: false,
@@ -317,7 +355,7 @@ export const updateSupportTicketPriority = async (req, res, next) => {
                 message: "invalid priority level",
             });
         }
-        const ticket = await SupportTicket.fundByIdAndUpdate(ticketId);
+        const ticket = await SupportTicket.findByIdAndUpdate(ticketId);
         if (!ticket) {
             return res.status(404).json({
                 success: false,
@@ -337,7 +375,7 @@ export const updateSupportTicketPriority = async (req, res, next) => {
     }
 };
 
-const resolveSupportTicket = async (req, res, next) => {
+ export const resolveSupportTicket = async (req, res, next) => {
     try {
         const { ticketId } = req.params;
         const { resolution } = req.body;
@@ -352,7 +390,7 @@ const resolveSupportTicket = async (req, res, next) => {
         if (typeof resolution !== "string" || !resolution.trim()) {
             return res.status(400).json({
                 success: false,
-                message: "Resolution details are required.",
+                message: "Resolution details are required(maximum of 5000 characters).",
             });
         }
 

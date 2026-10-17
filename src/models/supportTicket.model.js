@@ -23,10 +23,16 @@ const messageSchema = new mongoose.Schema(
 const supportTicketSchema = new mongoose.Schema(
     {
         customer: {
-            type: mongoose.schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
             index: true,
+        },
+
+        order: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Order",
+            default: null,
         },
 
         subject: {
