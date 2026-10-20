@@ -11,7 +11,7 @@ dns.setDefaultResultOrder("ipv4first");
 const connectDB = async () => {
     try{
         const connection = await mongoose.connect(process.env.MONGODB_URI);
-        console.log(`Connection to Database successfully ✅✅✅`);
+        console.log(`Mongoose connected successfully`);
     }catch (error) {
         console.error("MongoDB connection failed:", error.message);
         process.exit(1);
